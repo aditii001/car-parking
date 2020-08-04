@@ -1,0 +1,196 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+Servo servoEnter;
+Servo servoExit;
+LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16x2 display
+//Trig and Echo pins for ultrasonic sensors//
+int trigPin1 = 2;
+int echoPin1 = 3;
+int trigPin2 = 4;
+int echoPin2 = 5;
+int trigPin3 = 6;
+int echoPin3 = 7;
+int trigPin4 = 8;
+int echoPin4 = 9;
+int trigPin5 = 10;
+int echoPin5 = 11;
+//buttons//
+int button1 = 12;
+int button2 = 13;
+//LED pins//
+int led1R = 24;
+int led2R = 25;
+int led3R = 26;
+int led4R = 27;
+int led5R = 28;
+int led1G = 29;
+int led2G = 30;
+int led3G = 31;
+int led4G = 32;
+int led5G = 33;
+int dist[5]; //used to store distances
+int dist_threshold = 7.85; // if distance<15cm, the slot is occupied. Otherwise, it is free.
+int free_spaces = 5; //number of available parking spaces
+void setup() {
+// initialize serial communication:
+Serial.begin(9600);
+Serial1.begin(9600); //for the bluetooth module
+initSensors(); //initialize sensors and buttons
+initLEDs();// initialize LED indicators
+- 31 -
+servoEnter.write(85); //stop servo twitch on startup
+servoExit.write(85);
+servoEnter.write(0);
+servoExit.write(0);
+servoEnter.attach(22);
+servoExit.attach(23);
+lcd.init(); // initialize the lcd
+lcd.init();
+// Print a message to the LCD.
+lcd.backlight();
+showOnLCD(free_spaces);
+}
+void loop() {
+int reading1 = digitalRead(button1); //check the button at the entrance
+// open the gate if the button is pressed, and the parking spaces are available
+if (reading1 == 1 && free_spaces > 0) {
+servoEnter.write(90);
+delay(3000);
+servoEnter.write(0);
+delay(15);
+free_spaces--;
+showOnLCD(free_spaces);
+}
+int reading2 = digitalRead(button2); //check the button at the exit
+if (reading2 == 1 && free_spaces < 5) {
+servoExit.write(90);
+delay(3000);
+servoExit.write(0);
+delay(15);
+free_spaces++;
+showOnLCD(free_spaces);
+}
+// get the distances from ultrasonic sensors//
+dist[0] = readsensor(trigPin1, echoPin1);
+dist[1] = readsensor(trigPin2, echoPin2);
+dist[2] = readsensor(trigPin3, echoPin3);
+dist[3] = readsensor(trigPin4, echoPin4);
+dist[4] = readsensor(trigPin5, echoPin5);
+//send data to Serial port and Bluetooth module//
+if (dist[0] < dist_threshold) {
+Serial.print("11"); // slot 1 is occupied
+Serial1.print("11");
+Serial.print('\n');
+digitalWrite(led1R,1);
+digitalWrite(led1G,0);
+}
+else {
+Serial.print("10"); // slot 1 is free
+- 32 -
+Serial1.print("10");
+Serial.print('\n');
+digitalWrite(led1R,0);
+digitalWrite(led1G,1);
+}
+if (dist[1] < dist_threshold) {
+Serial.print("21");
+Serial1.print("21");
+Serial.print('\n');
+digitalWrite(led2R,1);
+digitalWrite(led2G,0);
+}
+else {
+Serial.print("20");
+Serial1.print("20");
+Serial.print('\n');
+digitalWrite(led2R,0);
+digitalWrite(led2G,1);
+}
+if (dist[2] < dist_threshold) {
+Serial.print("31");
+Serial1.print("31");
+Serial.print('\n');
+digitalWrite(led3R,1);
+digitalWrite(led3G,0);
+}
+else {
+Serial.print("30");
+Serial1.print("30");
+Serial.print('\n');
+digitalWrite(led3R,0);
+digitalWrite(led3G,1);
+}
+if (dist[3] < dist_threshold) {
+Serial.print("41");
+Serial1.print("41");
+Serial.print('\n');
+digitalWrite(led4R,1);
+digitalWrite(led4G,0);
+}
+else {
+Serial.print("40");
+Serial1.print("40");
+Serial.print('\n');
+digitalWrite(led4R,0);
+digitalWrite(led4G,1);
+}
+if (dist[4] < dist_threshold) {
+Serial.print("51");
+Serial1.print("51");
+Serial.print('\n');
+digitalWrite(led5R,1);
+digitalWrite(led5G,0);
+}
+else {
+Serial.print("50");
+Serial1.print("50");
+- 33 -
+Serial.print('\n');
+digitalWrite(led5R,0);
+digitalWrite(led5G,1);
+}
+delay(500); // wait for a little time before the next cycle
+}
+void initSensors() {
+pinMode(trigPin1, OUTPUT);
+pinMode(trigPin2, OUTPUT);
+pinMode(trigPin3, OUTPUT);
+pinMode(trigPin4, OUTPUT);
+pinMode(trigPin5, OUTPUT);
+pinMode(echoPin1, INPUT);
+pinMode(echoPin2, INPUT);
+pinMode(echoPin3, INPUT);
+pinMode(echoPin4, INPUT);
+pinMode(echoPin5, INPUT);
+pinMode(button1, INPUT);
+pinMode(button2, INPUT);
+}
+void initLEDs() {
+pinMode(led1R, OUTPUT);
+pinMode(led2R, OUTPUT);
+pinMode(led3R, OUTPUT);
+pinMode(led4R, OUTPUT);
+pinMode(led5R, OUTPUT);
+pinMode(led1G, OUTPUT);
+pinMode(led2G, OUTPUT);
+pinMode(led3G, OUTPUT);
+pinMode(led4G, OUTPUT);
+pinMode(led5G, OUTPUT);
+}
+int readsensor(int trigPin, int echoPin) {
+//send a pulse to the sensor//
+digitalWrite(trigPin, LOW);
+delayMicroseconds(1000);
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(1000);
+digitalWrite(trigPin, LOW);
+long duration = pulseIn(echoPin, HIGH); // measure the time taken to hear the echo
+long cm = duration / 29 / 2; //calculate the distance in cm
+return cm;
+}
+void showOnLCD(int spaces) {
+lcd.setCursor(1, 0);
+lcd.print("Free Spaces:");
+lcd.setCursor(1, 1);
+lcd.print(spaces);
