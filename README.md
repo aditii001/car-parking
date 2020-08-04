@@ -1,0 +1,4 @@
+# car-parking
+microprocessor 
+The main device that will be used in this project is an Arduino board. The Arduino is an open-source electronic device based on an easy to use hardware and software and it can be easily interfaced with any sensors or modules. The Arduino program will be written to control all of the components used to achieve the problem. See Figure 1 that shows the overall problem to be solved.
+The main objective is to build a car park demonstration unit that contains five parking spaces. The idea of the project is to make sure, that the driver who aims to park their car in the parking will know if there are any parking spaces available to him; an important contributing factor will be an android application. The intention of this project is to indicate the number of free parking spaces.
